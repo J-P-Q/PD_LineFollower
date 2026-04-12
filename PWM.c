@@ -2,6 +2,12 @@
 #include <stdint.h>
 
 void PWM_init(void){
+    /*
+        OSC = 20MHz
+        Prescaler 16
+        TMR2 Period = 255
+        PWM Freq = 1220Hz 
+    */
     TRISC &= ~(3 << 2);
 
     CCP1CON = 0x0C;
@@ -10,7 +16,7 @@ void PWM_init(void){
     PR2 = 0xFF; 
 
     T2CON |= (1 << 2);
-    //T2CON [1:0] ---> 00 = 1, 01 = 4, 1X = 16 Figure out prescaler later
+    T2CON |= (1 << 1);      // Prescaler 16
 
     return;
 }
