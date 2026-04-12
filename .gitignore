@@ -3,3 +3,14 @@ _build/
 cmake/
 out/
 nbproject/private/
+
+.generated_files/
+build/
+dist/
+nbproject/
+Makefile*
+Package-*
+private/
+!cmake/**/user.cmake
+cmake/**/.generated/*
+cmake/**/CMake*
