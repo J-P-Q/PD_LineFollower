@@ -14,7 +14,7 @@
 
 uint8_t sensorReading = 0;
 
-void __interrupt ISR(void){
+void __interrupt() ISR(void){
     if(INTCON & 0x01){
         sensorReading = Sensor_read();
         INTCON &= ~0x01;
