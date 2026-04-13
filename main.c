@@ -58,6 +58,12 @@ void main(void) {
 // https://eng.libretexts.org/Bookshelves/Industrial_and_Systems_Engineering/Chemical_Process_Dynamics_and_Controls_(Woolf)/09%3A_Proportional-Integral-Derivative_(PID)_Control/9.02%3A_P_I_D_PI_PD_and_PID_control
 // https://apmonitor.com/pdc/index.php/Main/ProportionalIntegralDerivative
 void PID(){ 
-    Product_k = k * errorTable[sensorReading]; 
+    errorNow = errorTable[sensorReading];
+    errorSum = errorSum + errorTable[sensorReading];
 
+    Product_k = k_p * errorNow;
+    Product_i = k_i * errorSum;
+    Product_d = k_d * (errorNow - errorPrev);
+
+    errorPrev = errorNow;
 }
