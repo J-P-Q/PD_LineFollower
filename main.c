@@ -7,6 +7,9 @@
 
 
 #include <xc.h>
+
+#include <stdint.h>
+
 #define _XTAL_FREQ 20000000 
 
 #define k_p 1
@@ -15,6 +18,8 @@
 
 #include <RBInt.h>
 #include <Sensor.h>
+
+void PID(void);
 
 uint8_t sensorReading = 0;
 
@@ -31,9 +36,9 @@ uint8_t errorTable[8] ={
     0       // 111      (probably find line here)
 };
 
-uint64_t errorNow = 0;
-uint64_t errorPrev = 0;
-uint64_t errorSum = 0;
+uint32_t errorNow = 0;
+uint32_t errorPrev = 0;
+uint32_t errorSum = 0;
 
 void __interrupt() ISR(void){
     if(INTCON & 0x01){
@@ -57,7 +62,11 @@ void main(void) {
 
 // https://eng.libretexts.org/Bookshelves/Industrial_and_Systems_Engineering/Chemical_Process_Dynamics_and_Controls_(Woolf)/09%3A_Proportional-Integral-Derivative_(PID)_Control/9.02%3A_P_I_D_PI_PD_and_PID_control
 // https://apmonitor.com/pdc/index.php/Main/ProportionalIntegralDerivative
-void PID(){ 
+void PID(void){ 
+    uint32_t Product_k;
+    uint32_t Product_i;
+    uint32_t Product_d;
+
     errorNow = errorTable[sensorReading];
     errorSum = errorSum + errorTable[sensorReading];
 
@@ -66,4 +75,6 @@ void PID(){
     Product_d = k_d * (errorNow - errorPrev);
 
     errorPrev = errorNow;
+
+    return;
 }
