@@ -9,10 +9,31 @@
 #include <xc.h>
 #define _XTAL_FREQ 20000000 
 
+#define k_p 1
+#define k_i 1
+#define k_d 1
+
 #include <RBInt.h>
 #include <Sensor.h>
 
 uint8_t sensorReading = 0;
+
+// PID variables
+// Black = 1, White = 0
+uint8_t errorTable[8] ={
+    0,      // 000      (probably find line in this case)
+    2,      // 001
+    0,      // 010
+    1,      // 011
+    -2,     // 100
+    0,      // 101      (highly unlikely)
+    -1,     // 110
+    0       // 111      (probably find line here)
+};
+
+uint64_t errorNow = 0;
+uint64_t errorPrev = 0;
+uint64_t errorSum = 0;
 
 void __interrupt() ISR(void){
     if(INTCON & 0x01){
@@ -24,9 +45,19 @@ void __interrupt() ISR(void){
 
 void main(void) {
 
-    while(1){
+    RBInt_init();
 
+
+    while(1){
+    
 
     }
     return;
+}
+
+// https://eng.libretexts.org/Bookshelves/Industrial_and_Systems_Engineering/Chemical_Process_Dynamics_and_Controls_(Woolf)/09%3A_Proportional-Integral-Derivative_(PID)_Control/9.02%3A_P_I_D_PI_PD_and_PID_control
+// https://apmonitor.com/pdc/index.php/Main/ProportionalIntegralDerivative
+void PID(){ 
+    Product_k = k * errorTable[sensorReading]; 
+
 }
