@@ -25,9 +25,12 @@
 #define k_i 1
 #define k_d 1
 
+#define baseDuty 128
+
 #include <RBInt.h>
 #include <Sensor.h>
 #include <TMR0.h>
+#include <PWM.h>
 
 void PID(void);
 
@@ -70,6 +73,7 @@ void main(void) {
 
     RBInt_init();
     TMR0_init();
+    PWM_init();
     
     //---TESTING ISR
     TRISD = 0x00;
@@ -98,6 +102,9 @@ void PID(void){
     Product_k = k_p * errorNow;
     Product_i = k_i * errorSum;
     Product_d = k_d * ((float)(errorNow - errorPrev)/((float)(timeNow - timePrev)));
+
+    PWM1_duty(baseDuty + Product_k + Product_i + Product_d);    // Right motor
+    PWM2_duty(baseDuty - Product_k - Product_i - Product_d);    // Left motor
 
     errorPrev = errorNow;
     timePrev = timeNow;
