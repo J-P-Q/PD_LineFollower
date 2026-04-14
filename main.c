@@ -21,7 +21,7 @@
 
 #define _XTAL_FREQ 20000000 
 
-#define k_p 1
+#define k_p 20
 #define k_i 1
 #define k_d 1
 
@@ -64,6 +64,7 @@ void __interrupt() ISR(void){
 
     if(INTCON & 0x04){
         TMR0_reset();
+        
         INTCON &= ~0x04;
     }
     return;
@@ -82,6 +83,7 @@ void main(void) {
     while(1){
         //---TESTING ISR
         PID();
+        __delay_ms(100);
         //--------------
     }
     return;
