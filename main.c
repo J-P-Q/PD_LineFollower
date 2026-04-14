@@ -27,6 +27,7 @@
 
 #include <RBInt.h>
 #include <Sensor.h>
+#include <TMR0.h>
 
 void PID(void);
 
@@ -57,12 +58,18 @@ void __interrupt() ISR(void){
         sensorReading = Sensor_read();
         INTCON &= ~0x01;
     }
+
+    if(INTCON & 0x04){
+        TMR0_reset();
+        INTCON &= ~0x04;
+    }
     return;
 }
 
 void main(void) {
 
     RBInt_init();
+    TMR0_init();
     
     //---TESTING ISR
     TRISD = 0x00;
@@ -85,7 +92,7 @@ void PID(void){
     uint32_t Product_d;
 
     errorNow = errorTable[sensorReading];
-    timeNow = getTime(); 
+    timeNow =  TMR0;
     errorSum = errorSum + errorTable[sensorReading];
     
     Product_k = k_p * errorNow;
