@@ -76,13 +76,15 @@ void main(void) {
     PWM_init();
     
     //---TESTING ISR
-    TRISD = 0x00;
-    PORTD = 0x00;
+    uint8_t test;
+    test = 0;
     //--------------
 
     while(1){
         //---TESTING ISR
-        PORTD = sensorReading;
+        PWM1_duty(test);
+        test ++;
+        __delay_ms(2);
         //--------------
     }
     return;
@@ -103,8 +105,8 @@ void PID(void){
     Product_i = k_i * errorSum;
     Product_d = k_d * ((float)(errorNow - errorPrev)/((float)(timeNow - timePrev)));
 
-    PWM1_duty(baseDuty + Product_k + Product_i + Product_d);    // Right motor
-    PWM2_duty(baseDuty - Product_k - Product_i - Product_d);    // Left motor
+    PWM1_duty(baseDuty + (uint16_t)(Product_k + Product_i + Product_d));    // Right motor
+    PWM2_duty(baseDuty - (uint16_t)(Product_k + Product_i + Product_d));    // Left motor
 
     errorPrev = errorNow;
     timePrev = timeNow;

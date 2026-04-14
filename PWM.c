@@ -23,13 +23,13 @@ void PWM_init(void){
 
 void PWM1_duty(uint16_t duty){
     CCPR1L = (uint8_t)(duty >> 2);
-    CCP1CON = (uint8_t)((duty & 0x03) << 4);
+    CCP1CON |= (uint8_t)((duty & 0x03) << 4);
     return;
 }
 
 
 void PWM2_duty(uint16_t duty){
     CCPR2L = (uint8_t)(duty >> 2);
-    CCP2CON = (uint8_t)((duty & 0x03) << 4);
+    CCP2CON |= (uint8_t)((duty & 0x03) << 4);
     return;
 }
