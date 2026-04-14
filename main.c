@@ -8,6 +8,15 @@
 
 #include <xc.h>
 
+#pragma config FOSC = HS        
+#pragma config WDTE = OFF       
+#pragma config PWRTE = OFF      
+#pragma config BOREN = OFF     
+#pragma config LVP = OFF        
+#pragma config CPD = OFF       
+#pragma config WRT = OFF       
+#pragma config CP = OFF  
+
 #include <stdint.h>
 
 #define _XTAL_FREQ 20000000 
@@ -51,11 +60,16 @@ void __interrupt() ISR(void){
 void main(void) {
 
     RBInt_init();
-
+    
+    //---TESTING ISR
+    TRISD = 0x00;
+    PORTD = 0x00;
+    //--------------
 
     while(1){
-    
-
+        //---TESTING ISR
+        PORTD = sensorReading;
+        //--------------
     }
     return;
 }
