@@ -35,7 +35,7 @@ uint8_t sensorReading = 0;
 
 // PID variables
 // Black = 1, White = 0
-uint8_t errorTable[8] ={
+int8_t errorTable[8] ={
     0,      // 000      (probably find line in this case)
     2,      // 001
     0,      // 010
@@ -46,12 +46,12 @@ uint8_t errorTable[8] ={
     0       // 111      (probably find line here)
 };
 
-uint32_t errorNow = 0;
-uint32_t errorPrev = 0;
-uint32_t errorSum = 0;
+int32_t errorNow = 0;
+int32_t errorPrev = 0;
+int32_t errorSum = 0;
 
-uint32_t timeNow = 0;
-uint32_t timePrev = 0;
+uint8_t timeNow = 0;
+uint8_t timePrev = 0;
 
 void __interrupt() ISR(void){
     if(INTCON & 0x01){
@@ -87,9 +87,9 @@ void main(void) {
 // https://eng.libretexts.org/Bookshelves/Industrial_and_Systems_Engineering/Chemical_Process_Dynamics_and_Controls_(Woolf)/09%3A_Proportional-Integral-Derivative_(PID)_Control/9.02%3A_P_I_D_PI_PD_and_PID_control
 // https://apmonitor.com/pdc/index.php/Main/ProportionalIntegralDerivative
 void PID(void){ 
-    uint32_t Product_k;
-    uint32_t Product_i;
-    uint32_t Product_d;
+    int32_t Product_k;
+    int32_t Product_i;
+    int32_t Product_d;
 
     errorNow = errorTable[sensorReading];
     timeNow =  TMR0;
