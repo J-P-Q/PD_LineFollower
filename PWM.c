@@ -8,7 +8,7 @@ void PWM_init(void){
         TMR2 Period = 255
         PWM Freq = 1220Hz 
     */
-    TRISC &= ~(3 << 2);
+    TRISC &= ~(3 << 1);
 
     CCP1CON = 0x0C;
     CCP2CON = 0x0C;
