@@ -49,6 +49,9 @@ uint32_t errorNow = 0;
 uint32_t errorPrev = 0;
 uint32_t errorSum = 0;
 
+uint32_t timeNow = 0;
+uint32_t timePrev = 0;
+
 void __interrupt() ISR(void){
     if(INTCON & 0x01){
         sensorReading = Sensor_read();
@@ -82,13 +85,14 @@ void PID(void){
     uint32_t Product_d;
 
     errorNow = errorTable[sensorReading];
+    timeNow = getTime(); 
     errorSum = errorSum + errorTable[sensorReading];
-
+    
     Product_k = k_p * errorNow;
     Product_i = k_i * errorSum;
-    Product_d = k_d * (errorNow - errorPrev);
+    Product_d = k_d * ((float)(errorNow - errorPrev)/((float)(timeNow - timePrev)));
 
     errorPrev = errorNow;
-
+    timePrev = timeNow;
     return;
 }
