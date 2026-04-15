@@ -27,7 +27,7 @@
 
 #define baseDuty 128
 
-#include <RBInt.h>
+
 #include <Sensor.h>
 #include <TMR0.h>
 #include <PWM.h>
@@ -57,14 +57,9 @@ uint8_t timeNow = 0;
 uint8_t timePrev = 0;
 
 void __interrupt() ISR(void){
-    if(INTCON & 0x01){
-        sensorReading = Sensor_read();
-        INTCON &= ~0x01;
-    }
-
     if(INTCON & 0x04){
         TMR0_reset();
-        
+        sensorReading = Sensor_read();
         INTCON &= ~0x04;
     }
     return;
@@ -72,30 +67,38 @@ void __interrupt() ISR(void){
 
 void main(void) {
 
-    RBInt_init();
-    TMR0_init();
+    Sensor_init();
     PWM_init();
+    //TMR0_init();
+   
     
     //---TESTING ISR
     
     //--------------
 
     while(1){
-        //---TESTING ISR
-        //PID();
-       // __delay_ms(100);
-        //--------------
-        PWM1_duty(500);
-        PWM2_duty(128);
-        __delay_ms(500);
-        PWM1_duty(800);
-        PWM2_duty(800);
-        __delay_ms(2000);
+        //---TESTING
+       
         PWM1_duty(0);
         PWM2_duty(0);
         __delay_ms(2000);
+        PWM1_duty(100);
+        __delay_ms(2000);
         PWM1_duty(200);
-        PWM2_duty(200);   
+        __delay_ms(2000);
+        PWM1_duty(400);
+        __delay_ms(2000);
+        PWM1_duty(800);   
+        __delay_ms(2000);
+
+        
+        PWM2_duty(100);
+        __delay_ms(2000);
+        PWM2_duty(200);
+        __delay_ms(2000);
+        PWM2_duty(400);
+        __delay_ms(2000);
+        PWM2_duty(800);   
         __delay_ms(2000);
     }
     return;
