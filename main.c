@@ -82,9 +82,21 @@ void main(void) {
 
     while(1){
         //---TESTING ISR
-        PID();
-        __delay_ms(100);
+        //PID();
+       // __delay_ms(100);
         //--------------
+        PWM1_duty(500);
+        PWM2_duty(128);
+        __delay_ms(500);
+        PWM1_duty(800);
+        PWM2_duty(800);
+        __delay_ms(2000);
+        PWM1_duty(0);
+        PWM2_duty(0);
+        __delay_ms(2000);
+        PWM1_duty(200);
+        PWM2_duty(200);   
+        __delay_ms(2000);
     }
     return;
 }
