@@ -21,7 +21,7 @@
 
 #define _XTAL_FREQ 20000000 
 
-#define k_p 20
+#define k_p 100
 #define k_i 0
 #define k_d 0
 
@@ -63,7 +63,7 @@ uint8_t timePrev = 0;
 void __interrupt() ISR(void){
     if(INTCON & 0x04){
         TMR0_reset();
-        sensorReading = Sensor_read();
+        //sensorReading = Sensor_read();
         INTCON &= ~0x04;
     }
     return;
@@ -83,12 +83,29 @@ void main(void) {
     while(1){
         //---TESTING
         sensorReading = 0x02;
-        __delay_ms(3000);
-        sensorReading = 0x03;
-        __delay_ms(3000);
-        sensorReading = 0x06;
-        __delay_ms(3000);
         PID();
+        __delay_ms(1000);
+
+        PWM1_duty(0);
+        PWM2_duty(0);
+        __delay_ms(1000);
+
+        sensorReading = 0x01;
+        PID();
+        __delay_ms(1000);
+
+        PWM1_duty(0);
+        PWM2_duty(0);
+        __delay_ms(1000);
+
+
+        sensorReading = 0x04;
+        PID();
+        __delay_ms(1000);
+    
+        PWM1_duty(0);
+        PWM2_duty(0);
+        __delay_ms(1000);
     }
     return;
 }
