@@ -22,11 +22,13 @@
 #define _XTAL_FREQ 20000000 
 
 #define k_p 20
-#define k_i 1
-#define k_d 1
+#define k_i 0
+#define k_d 0
 
-#define maxDuty 511 // 50% duty, cause motor will be overpowered by 8V batt
-#define baseDuty 255    //50% of max = 511
+#define maxDuty 700 // 50% duty, cause motor will be overpowered by 8V batt
+#define minDuty 200 // 100 just buzzes
+#define baseDuty 450    // (700 + 200)/2 = 450
+
 
 
 
@@ -80,28 +82,13 @@ void main(void) {
 
     while(1){
         //---TESTING
-       
-        PWM1_duty(0);
-        PWM2_duty(0);
-        __delay_ms(2000);
-        PWM1_duty(100);
-        __delay_ms(2000);
-        PWM1_duty(200);
-        __delay_ms(2000);
-        PWM1_duty(400);
-        __delay_ms(2000);
-        PWM1_duty(800);   
-        __delay_ms(2000);
-
-        
-        PWM2_duty(100);
-        __delay_ms(2000);
-        PWM2_duty(200);
-        __delay_ms(2000);
-        PWM2_duty(400);
-        __delay_ms(2000);
-        PWM2_duty(800);   
-        __delay_ms(2000);
+        sensorReading = 0x02;
+        __delay_ms(3000);
+        sensorReading = 0x03;
+        __delay_ms(3000);
+        sensorReading = 0x06;
+        __delay_ms(3000);
+        PID();
     }
     return;
 }
@@ -113,6 +100,9 @@ void PID(void){
     int32_t Product_i;
     int32_t Product_d;
 
+    uint16_t finalDuty1;
+    uint16_t finalDuty2;
+
     errorNow = errorTable[sensorReading];
     timeNow =  TMR0;
     errorSum = errorSum + errorTable[sensorReading];
@@ -121,8 +111,25 @@ void PID(void){
     Product_i = k_i * errorSum;
     Product_d = k_d * ((float)(errorNow - errorPrev)/((float)(timeNow - timePrev)));
 
-    PWM1_duty(maxDuty & (uint16_t) (baseDuty + Product_k + Product_i + Product_d));    // Right motor
-    PWM2_duty(maxDuty & (uint16_t) (baseDuty - Product_k - Product_i - Product_d));    // Left motor
+    finalDuty1 = (int16_t) (baseDuty + Product_k + Product_i + Product_d);
+    finalDuty2 = (int16_t) (baseDuty - Product_k - Product_i - Product_d);
+
+    if(finalDuty1 > maxDuty){
+        finalDuty1 = maxDuty;
+    }
+    else if(finalDuty1 < minDuty){
+        finalDuty1 = minDuty;
+    }
+
+    if(finalDuty2 > maxDuty){
+        finalDuty2 = maxDuty;
+    }
+    else if(finalDuty2 < minDuty){
+        finalDuty2 = minDuty;
+    }
+
+    PWM1_duty((uint16_t) finalDuty1);    // Right motor
+    PWM2_duty((uint16_t) finalDuty2);    // Left motor
 
     errorPrev = errorNow;
     timePrev = timeNow;
