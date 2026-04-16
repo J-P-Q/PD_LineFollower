@@ -25,7 +25,9 @@
 #define k_i 1
 #define k_d 1
 
-#define baseDuty 128
+#define maxDuty 511 // 50% duty, cause motor will be overpowered by 8V batt
+#define baseDuty 255    //50% of max = 511
+
 
 
 #include <Sensor.h>
@@ -119,8 +121,8 @@ void PID(void){
     Product_i = k_i * errorSum;
     Product_d = k_d * ((float)(errorNow - errorPrev)/((float)(timeNow - timePrev)));
 
-    PWM1_duty((uint16_t) (baseDuty + Product_k + Product_i + Product_d));    // Right motor
-    PWM2_duty((uint16_t) (baseDuty - Product_k - Product_i - Product_d));    // Left motor
+    PWM1_duty(maxDuty & (uint16_t) (baseDuty + Product_k + Product_i + Product_d));    // Right motor
+    PWM2_duty(maxDuty & (uint16_t) (baseDuty - Product_k - Product_i - Product_d));    // Left motor
 
     errorPrev = errorNow;
     timePrev = timeNow;
