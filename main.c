@@ -38,32 +38,34 @@
 
 void PID(void);
 
-uint8_t sensorReading = 0;
+volatile uint8_t sensorReading = 0;
 
 // PID variables
 // Black = 1, White = 0
-int8_t errorTable[8] ={
-    0,      // 000      (probably find line in this case)
+volatile int8_t errorTable[8] ={
+    10,      // 000      (probably find line in this case)
     2,      // 001
     0,      // 010
     1,      // 011
     -2,     // 100
-    0,      // 101      (highly unlikely)
+    10,     // 101      (highly unlikely)
     -1,     // 110
-    0       // 111      (probably find line here)
+    10       // 111      (probably find line here)
 };
 
-int32_t errorNow = 0;
-int32_t errorPrev = 0;
-int32_t errorSum = 0;
+volatile int32_t errorNow = 0;
+volatile int32_t errorPrev = 0;
+volatile int32_t errorSum = 0;
+ 
+volatile uint8_t timeNow = 0;
+volatile uint8_t timePrev = 0;
 
-uint8_t timeNow = 0;
-uint8_t timePrev = 0;
+volatile uint8_t my10ms = 0;
 
 void __interrupt() ISR(void){
     if(INTCON & 0x04){
         TMR0_reset();
-        //sensorReading = Sensor_read();
+        my10ms++;
         INTCON &= ~0x04;
     }
     return;
@@ -73,39 +75,21 @@ void main(void) {
 
     Sensor_init();
     PWM_init();
-    //TMR0_init();
-   
+    TMR0_init();
     
+    timePrev = 0;
+    timeNow = my10ms;
     //---TESTING ISR
     
     //--------------
 
     while(1){
-        //---TESTING
-        sensorReading = 0x02;
-        PID();
-        __delay_ms(1000);
-
-        PWM1_duty(0);
-        PWM2_duty(0);
-        __delay_ms(1000);
-
-        sensorReading = 0x01;
-        PID();
-        __delay_ms(1000);
-
-        PWM1_duty(0);
-        PWM2_duty(0);
-        __delay_ms(1000);
-
-
-        sensorReading = 0x04;
-        PID();
-        __delay_ms(1000);
-    
-        PWM1_duty(0);
-        PWM2_duty(0);
-        __delay_ms(1000);
+        timeNow = my10ms;
+        if(timeNow - timePrev >= 1){   // 10ms has passed
+            sensorReading = Sensor_read();
+            PID();
+            timePrev = timeNow;
+        }
     }
     return;
 }
@@ -121,34 +105,38 @@ void PID(void){
     uint16_t finalDuty2;
 
     errorNow = errorTable[sensorReading];
-    timeNow =  TMR0;
-    errorSum = errorSum + errorTable[sensorReading];
-    
-    Product_k = k_p * errorNow;
-    Product_i = k_i * errorSum;
-    Product_d = k_d * ((float)(errorNow - errorPrev)/((float)(timeNow - timePrev)));
-
-    finalDuty1 = (int16_t) (baseDuty + Product_k + Product_i + Product_d);
-    finalDuty2 = (int16_t) (baseDuty - Product_k - Product_i - Product_d);
-
-    if(finalDuty1 > maxDuty){
-        finalDuty1 = maxDuty;
+    if(errorNow == 10){
+        finalDuty1 = 0;
+        finalDuty2 = 0;
     }
-    else if(finalDuty1 < minDuty){
-        finalDuty1 = minDuty;
-    }
+    else{
+        errorSum = errorSum + errorNow;
+        
+        Product_k = k_p * errorNow;
+        Product_i = k_i * errorSum;
+        Product_d = k_d * (float)(errorNow - errorPrev);
 
-    if(finalDuty2 > maxDuty){
-        finalDuty2 = maxDuty;
-    }
-    else if(finalDuty2 < minDuty){
-        finalDuty2 = minDuty;
+        finalDuty1 = (int16_t) (baseDuty + Product_k + Product_i + Product_d);
+        finalDuty2 = (int16_t) (baseDuty - Product_k - Product_i - Product_d);
+
+        if(finalDuty1 > maxDuty){
+            finalDuty1 = maxDuty;
+        }
+        else if(finalDuty1 < minDuty){
+            finalDuty1 = 0;
+        }
+
+        if(finalDuty2 > maxDuty){
+            finalDuty2 = maxDuty;
+        }
+        else if(finalDuty2 < minDuty){
+            finalDuty2 = 0;
+        }
     }
 
     PWM1_duty((uint16_t) finalDuty1);    // Right motor
     PWM2_duty((uint16_t) finalDuty2);    // Left motor
 
     errorPrev = errorNow;
-    timePrev = timeNow;
     return;
 }
