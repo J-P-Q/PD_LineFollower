@@ -37,12 +37,13 @@
 #include <PWM.h>
 
 void PID(void);
+void sanityTest(void);
 
 volatile uint8_t sensorReading = 0;
 
 // PID variables
 // Black = 1, White = 0
-volatile int8_t errorTable[8] ={
+volatile uint8_t errorTable[8] ={
     10,      // 000      (probably find line in this case)
     2,      // 001
     0,      // 010
@@ -84,12 +85,17 @@ void main(void) {
     //--------------
 
     while(1){
+
+        sanityTest();
+
+        // This was old code, uncomment after test
+        /*
         timeNow = my10ms;
         if(timeNow - timePrev >= 1){   // 10ms has passed
             sensorReading = Sensor_read();
             PID();
             timePrev = timeNow;
-        }
+        }*/
     }
     return;
 }
@@ -138,5 +144,21 @@ void PID(void){
     PWM2_duty((uint16_t) finalDuty2);    // Left motor
 
     errorPrev = errorNow;
+    return;
+}
+
+void sanityTest(void){
+    if      (sensorReading == 0x02){
+        PWM1_duty(600);
+        PWM2_duty(600);
+    }
+    else if (sensorReading == 0x01){
+        PWM1_duty(0);
+        PWM2_duty(700);
+    }
+    else if (sensorReading == 0x04){
+        PWM1_duty(700);
+        PWM2_duty(0);
+    }
     return;
 }
