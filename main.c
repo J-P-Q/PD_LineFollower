@@ -43,15 +43,15 @@ volatile uint8_t sensorReading = 0;
 
 // PID variables
 // Black = 1, White = 0
-volatile uint8_t errorTable[8] ={
-    10,      // 000      (probably find line in this case)
+volatile int8_t errorTable[8] ={
+    3,      // 000      (probably find line in this case)
     2,      // 001
     0,      // 010
     1,      // 011
     -2,     // 100
-    10,     // 101      (highly unlikely)
+    3,     // 101      (highly unlikely)
     -1,     // 110
-    10       // 111      (probably find line here)
+    3       // 111      (probably find line here)
 };
 
 volatile int32_t errorNow = 0;
@@ -96,9 +96,9 @@ void main(void) {
     while(1){
         timeNow = my10ms;
         
-        if((uint8_t)(timeNow - timePrev) >= 100){   // VERY IMPORTANT (uint8_t)
+        if((uint8_t)(timeNow - timePrev) >= 1){   // VERY IMPORTANT (uint8_t)
             sensorReading = Sensor_read();
-            
+            PORTD = sensorReading;    // Debugging, remove after
             
             timePrev = timeNow;
         }
@@ -125,7 +125,7 @@ void PID(void){
     uint16_t finalDuty2;
 
     errorNow = errorTable[sensorReading];
-    if(errorNow == 10){
+    if(errorNow == 3){
         finalDuty1 = 0;
         finalDuty2 = 0;
     }
