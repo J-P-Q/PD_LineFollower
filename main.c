@@ -66,7 +66,6 @@ volatile uint8_t my10ms = 0;
 void __interrupt() ISR(void){
     if(INTCON & 0x04){
         TMR0_reset();
-        //sensorReading = Sensor_read();
         my10ms++;
         INTCON &= ~0x04;        
     }
@@ -96,10 +95,11 @@ void main(void) {
 
     while(1){
         timeNow = my10ms;
-        //PORTD = sensorReading;   // For debugging, remove after
-        //sanityTest();
-        if((uint8_t)(timeNow - timePrev) >= 100){
-            PORTD = ~PORTD;
+        
+        if((uint8_t)(timeNow - timePrev) >= 100){   // VERY IMPORTANT (uint8_t)
+            sensorReading = Sensor_read();
+            
+            
             timePrev = timeNow;
         }
         // This was old code, uncomment after test
