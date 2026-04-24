@@ -1,6 +1,6 @@
 #include <xc.h>
 
-#define preloadCounter 195
+#define preloadCounter 61
 #define timerPrescaler 0x07
 
 void TMR0_init(void){   //100ms overflow
@@ -10,9 +10,10 @@ void TMR0_init(void){   //100ms overflow
     // 51.2us * 256 = 13.1072ms
 
     // 10ms / 51.2us = 195.3125 
+    // 265 - 195.3125 = 61
 
     TMR0 = preloadCounter;
-    OPTION_REG |= timerPrescaler; // prescaler = 256
+    OPTION_REG = (OPTION_REG & 0xF8) | timerPrescaler; // prescaler = 256
     INTCON |= (1 << 5);
     return;
 }
