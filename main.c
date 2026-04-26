@@ -84,7 +84,7 @@ void main(void) {
 
     TMR0_init();
     Sensor_init();
-    //PWM_init();
+    PWM_init();
     
 
     timePrev = 0;
@@ -98,7 +98,7 @@ void main(void) {
         
         if((uint8_t)(timeNow - timePrev) >= 1){   // VERY IMPORTANT (uint8_t)
             sensorReading = Sensor_read();
-            PORTD = sensorReading;    // Debugging, remove after
+            sanityTest();
             
             timePrev = timeNow;
         }
