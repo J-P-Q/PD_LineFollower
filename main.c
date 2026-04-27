@@ -43,7 +43,7 @@ volatile uint8_t sensorReading = 0;
 
 // PID variables
 // Black = 1, White = 0
-volatile int8_t errorTable[8] ={
+volatile int32_t errorTable[8] ={
     3,      // 000      (probably find line in this case)
     2,      // 001
     0,      // 010
@@ -98,18 +98,10 @@ void main(void) {
         
         if((uint8_t)(timeNow - timePrev) >= 1){   // VERY IMPORTANT (uint8_t)
             sensorReading = Sensor_read();
-            sanityTest();
+            PID();
             
             timePrev = timeNow;
         }
-        // This was old code, uncomment after test
-        /*
-        timeNow = my10ms;
-        if(timeNow - timePrev >= 1){   // 10ms has passed
-            sensorReading = Sensor_read();
-            PID();
-            timePrev = timeNow;
-        }*/
     }
     return;
 }
@@ -121,13 +113,14 @@ void PID(void){
     int32_t Product_i;
     int32_t Product_d;
 
-    uint16_t finalDuty1;
-    uint16_t finalDuty2;
+    int16_t finalDuty1;
+    int16_t finalDuty2;
 
     errorNow = errorTable[sensorReading];
     if(errorNow == 3){
-        finalDuty1 = 0;
-        finalDuty2 = 0;
+        // Keep last duty cycle on
+        //finalDuty1 = 0;
+        //finalDuty2 = 0;
     }
     else{
         errorSum = errorSum + errorNow;
@@ -154,8 +147,8 @@ void PID(void){
         }
     }
 
-    PWM1_duty((uint16_t) finalDuty1);    // Right motor
-    PWM2_duty((uint16_t) finalDuty2);    // Left motor
+    PWM1_duty((uint16_t) finalDuty1);    // left motor
+    PWM2_duty((uint16_t) finalDuty2);    // right motor
 
     errorPrev = errorNow;
     return;
