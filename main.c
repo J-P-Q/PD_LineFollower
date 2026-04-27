@@ -21,13 +21,37 @@
 
 #define _XTAL_FREQ 20000000 
 
-#define k_p 100
-#define k_i 0
-#define k_d 0
+#define k_p 400
+/* k_p history
+#1 100 = undershoot
+#2 200 = seems fine but on 3rd consecutive right angle, it (try changing base duty lower and max to 800 but k_p still 200)
+#3 200 = maxDuty 700 -->800; baseDuty 300 --> 400 | still strays on 3rd right turn (try 850 max)
+#4 200 = maxDuty 800; try 300 base duty 
+STOP at 200, it wobbles so maybe it misses the line, stablizing with k_d might make readings more reliable at 3rd turn
+------- using 5ms sensor reading interval
+#5 400 = 200 k_p with 400 k_d still undershooting
+#6 500 = i think worse case error is maxed out, but 1 and -1 errors should respond a little more to not miss turns
 
-#define maxDuty 700 // 50% duty, cause motor will be overpowered by 8V batt
+------ using errorPrev to follow through with turn (so far it run well with k_p 500 and k_d 400, but still wobbles)
+#7 400 = try lowering assuming memory solution handles 90 degree turns
+*/
+#define k_i 0
+#define k_d 400
+/* k_d history
+#1  50 = random assumption
+#2 200 = 50 reduced wobble but not enough (still wobbles, maybe reduce baseDuty, cause k_p is at its max and still no response on 3rd turn)
+#3 300 = reduced base duty from 400 t0 300, still wobbles but strays less on 3rd turn 
+----- 300 does not miss turns but maybe a higher one will be more stable
+#4 400 = 400 too unresponsive, maybe 350
+------ using 5ms sensor reading interval
+
+------ using errorPrev to follow through with turn (so far it run well with k_p 500 and k_d 400, but still wobbles)
+
+*/
+
+#define maxDuty 850 // 50% duty, cause motor will be overpowered by 8V batt
 #define minDuty 200 // 100 just buzzes
-#define baseDuty 450    // (700 + 200)/2 = 450
+#define baseDuty 300    // 
 
 
 
@@ -117,10 +141,15 @@ void PID(void){
     int16_t finalDuty2;
 
     errorNow = errorTable[sensorReading];
-    if(errorNow == 3){
-        // Keep last duty cycle on
-        //finalDuty1 = 0;
-        //finalDuty2 = 0;
+    if(errorNow == 3){      // Try using memory to correct skipping past 90 degree turn
+        if(errorPrev > 0){
+            PWM1_duty(maxDuty);
+            PWM2_duty(0);
+        }
+        else if(errorPrev < 0){
+            PWM1_duty(0);
+            PWM2_duty(maxDuty);
+        }
     }
     else{
         errorSum = errorSum + errorNow;
