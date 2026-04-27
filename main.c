@@ -162,6 +162,7 @@ void PID(void){
 }
 
 void sanityTest(void){
+    
     if      (sensorReading == 0x02){
         PWM1_duty(600);
         PWM2_duty(600);
