@@ -21,7 +21,7 @@
 
 #define _XTAL_FREQ 20000000 
 
-#define k_p 400
+#define k_p 150
 /* k_p history
 #1 100 = undershoot
 #2 200 = seems fine but on 3rd consecutive right angle, it (try changing base duty lower and max to 800 but k_p still 200)
@@ -34,9 +34,15 @@ STOP at 200, it wobbles so maybe it misses the line, stablizing with k_d might m
 
 ------ using errorPrev to follow through with turn (so far it run well with k_p 500 and k_d 400, but still wobbles)
 #7 400 = try lowering assuming memory solution handles 90 degree turns
+
+--- New trial, reset to 0
+#1 20  (somehow works really well, maybe cause of memory solution, doesnt even need a k_d cause it doesnt wobble, but try upping the speed)
+#2 20 but with baseDuty = 400 (very smooth for incremental curves without k_d but misses right angle turns) 
+#3 Tried retaining errorPrev when memory case happens, but regular turn is too unresponsive
+#4 150
 */
 #define k_i 0
-#define k_d 400
+#define k_d 0
 /* k_d history
 #1  50 = random assumption
 #2 200 = 50 reduced wobble but not enough (still wobbles, maybe reduce baseDuty, cause k_p is at its max and still no response on 3rd turn)
@@ -47,11 +53,13 @@ STOP at 200, it wobbles so maybe it misses the line, stablizing with k_d might m
 
 ------ using errorPrev to follow through with turn (so far it run well with k_p 500 and k_d 400, but still wobbles)
 
+-- new trial reset to 0 
+
 */
 
 #define maxDuty 850 // 50% duty, cause motor will be overpowered by 8V batt
 #define minDuty 200 // 100 just buzzes
-#define baseDuty 300    // 
+#define baseDuty 400    // 
 
 
 
@@ -174,12 +182,14 @@ void PID(void){
         else if(finalDuty2 < minDuty){
             finalDuty2 = 0;
         }
+
+        errorPrev = errorNow; // memory solution retains errorPrev
     }
 
     PWM1_duty((uint16_t) finalDuty1);    // left motor
     PWM2_duty((uint16_t) finalDuty2);    // right motor
 
-    errorPrev = errorNow;
+    
     return;
 }
 
