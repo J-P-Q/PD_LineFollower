@@ -21,7 +21,7 @@
 
 #define _XTAL_FREQ 20000000 
 
-#define k_p 150
+#define k_p 100
 /* k_p history
 #1 100 = undershoot
 #2 200 = seems fine but on 3rd consecutive right angle, it (try changing base duty lower and max to 800 but k_p still 200)
@@ -37,9 +37,6 @@ STOP at 200, it wobbles so maybe it misses the line, stablizing with k_d might m
 
 --- New trial, reset to 0
 #1 20  (somehow works really well, maybe cause of memory solution, doesnt even need a k_d cause it doesnt wobble, but try upping the speed)
-#2 20 but with baseDuty = 400 (very smooth for incremental curves without k_d but misses right angle turns) 
-#3 Tried retaining errorPrev when memory case happens, but regular turn is too unresponsive
-#4 150
 */
 #define k_i 0
 #define k_d 0
@@ -59,7 +56,7 @@ STOP at 200, it wobbles so maybe it misses the line, stablizing with k_d might m
 
 #define maxDuty 850 // 50% duty, cause motor will be overpowered by 8V batt
 #define minDuty 200 // 100 just buzzes
-#define baseDuty 400    // 
+#define baseDuty 300    // 
 
 
 
@@ -149,49 +146,46 @@ void PID(void){
     int16_t finalDuty2;
 
     errorNow = errorTable[sensorReading];
-    if(errorNow == 3){      // Try using memory to correct skipping past 90 degree turn
+    if(errorNow == 3){      // not handling negative and positive 3 errors causes bot to turn on one side when error = 3, this might fix it tho
         if(errorPrev > 0){
-            PWM1_duty(maxDuty);
-            PWM2_duty(0);
+            errorNow = 3;
         }
         else if(errorPrev < 0){
-            PWM1_duty(0);
-            PWM2_duty(maxDuty);
+            errorNow = -3;
         }
     }
-    else{
-        errorSum = errorSum + errorNow;
-        
-        Product_k = k_p * errorNow;
-        Product_i = k_i * errorSum;
-        Product_d = k_d * (float)(errorNow - errorPrev);
+    
+    errorSum = errorSum + errorNow;
+    
+    Product_k = k_p * errorNow;
+    Product_i = k_i * errorSum;
+    Product_d = k_d * (float)(errorNow - errorPrev);
 
-        finalDuty1 = (int16_t) (baseDuty + Product_k + Product_i + Product_d);
-        finalDuty2 = (int16_t) (baseDuty - Product_k - Product_i - Product_d);
+    finalDuty1 = (int16_t) (baseDuty + Product_k + Product_i + Product_d);
+    finalDuty2 = (int16_t) (baseDuty - Product_k - Product_i - Product_d);
 
-        if(finalDuty1 > maxDuty){
-            finalDuty1 = maxDuty;
-        }
-        else if(finalDuty1 < minDuty){
-            finalDuty1 = 0;
-        }
-
-        if(finalDuty2 > maxDuty){
-            finalDuty2 = maxDuty;
-        }
-        else if(finalDuty2 < minDuty){
-            finalDuty2 = 0;
-        }
-
-        errorPrev = errorNow; // memory solution retains errorPrev
+    if(finalDuty1 > maxDuty){
+        finalDuty1 = maxDuty;
     }
+    else if(finalDuty1 < minDuty){
+        finalDuty1 = 0;
+    }
+
+    if(finalDuty2 > maxDuty){
+        finalDuty2 = maxDuty;
+    }
+    else if(finalDuty2 < minDuty){
+        finalDuty2 = 0;
+    }
+
 
     PWM1_duty((uint16_t) finalDuty1);    // left motor
     PWM2_duty((uint16_t) finalDuty2);    // right motor
 
-    
+    errorPrev = errorNow;
     return;
 }
+
 
 void sanityTest(void){
     
