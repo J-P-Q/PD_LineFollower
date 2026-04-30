@@ -87,9 +87,11 @@ enum sensorColor{
     BWB = 0b101
 };
 
-volatile int32_t errorNow = 0;
-volatile int32_t errorPrev = 0;
-volatile int32_t errorSum = 0;
+// Signed component of error
+volatile int8_t errorSign = 0;
+volatile uint32_t errorNow = 0;
+volatile uint32_t errorPrev = 0;
+volatile uint32_t errorSum = 0;
  
 volatile uint8_t timeNow = 0;
 volatile uint8_t timePrev = 0;
@@ -155,14 +157,14 @@ void PID(void){
     getError(sensorReading);
 
     if(regularReading == 1){        
-        errorSum = errorSum + errorNow;
+        //errorSum = errorSum + errorNow;
         
-        Product_k = k_p * errorNow;
-        Product_i = k_i * errorSum;
-        Product_d = k_d * (float)(errorNow - errorPrev);
+        Product_k = (int32_t)k_p * (int32_t)errorNow * errorSign;
+        //Product_i = k_i * errorSum;
+        //Product_d = k_d * (float)(errorNow - errorPrev);
 
-        finalDuty1 = (int16_t) (baseDuty + Product_k + Product_i + Product_d);
-        finalDuty2 = (int16_t) (baseDuty - Product_k - Product_i - Product_d);
+        finalDuty1 = (int16_t) (baseDuty + Product_k);// + Product_i + Product_d);
+        finalDuty2 = (int16_t) (baseDuty - Product_k);// - Product_i - Product_d);
 
         if(finalDuty1 > maxDuty){
             finalDuty1 = maxDuty;
@@ -184,19 +186,20 @@ void PID(void){
     }
 
     else if(regularReading == 0){  
-        PWM1_duty(0);
-        PWM2_duty(0);
-        /*                      Memory Solution, but buggy
-        if(errorPrev > 0){
+        //PWM1_duty(0);
+        //PWM2_duty(0);
+        //                      Memory Solution, but buggy
+        if(errorSign > 0){
             PWM1_duty(maxDuty);
             PWM2_duty(0);
         }
-        else if(errorPrev < 0){
+        else if(errorSign < 0){
             PWM1_duty(0);
             PWM2_duty(maxDuty);
-        }*/
+        }
     }
-    errorPrev = errorNow;
+    errorPrev = errorSign;  //nase error prev on sign now
+    PORTD = errorPrev;
     return;
 }
 
@@ -205,30 +208,32 @@ void getError(uint8_t sensorReading){
     switch(sensorReading){
             case WBW:
                 errorNow = 0;
+                errorSign = 0;
                 break;
 
             // Turn Right    
             case WBB:
                 errorNow = 1;
+                errorSign = 1;
                 break;
             case WWB:
                 errorNow = 2;
+                errorSign = 1;
                 break;
 
             // turn left
             case BBW:
-                errorNow = -1;
+                errorNow = 1;
+                errorSign = -1;
                 break;
             case BWW:
-                errorNow = -2;
+                errorNow = 2;
+                errorSign = -1;
                 break;
 
-            case WWW:
-            case BBB:
-            case BWB:
-                regularReading = 0;  // indicate that the bot is off the line
-                
-                break;
+            case WWW:regularReading = 0; break;  // indicate that the bot is off the line
+            case BBB:regularReading = 0; break;  // indicate that the bot is off the line
+            case BWB:regularReading = 0; break;  // indicate that the bot is off the line
             
             default:
                 break;
