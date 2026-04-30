@@ -66,21 +66,25 @@ STOP at 200, it wobbles so maybe it misses the line, stablizing with k_d might m
 #include <PWM.h>
 
 void PID(void);
+void getError(uint8_t sensorReading);
 void sanityTest(void);
 
 volatile uint8_t sensorReading = 0;
 
-// PID variables
-// Black = 1, White = 0
-volatile int32_t errorTable[8] ={
-    3,      // 000      (probably find line in this case)
-    2,      // 001
-    0,      // 010
-    1,      // 011
-    -2,     // 100
-    3,     // 101      (highly unlikely)
-    -1,     // 110
-    3       // 111      (probably find line here)
+enum sensorColor{
+    // PID variables
+    // Black = 1, White = 0
+    WBW = 0b010,
+
+    WBB = 0b011,
+    WWB = 0b001,
+
+    BBW = 0b110,
+    BWW = 0b100,
+
+    WWW = 0b000,
+    BBB = 0b111,
+    BWB = 0b101
 };
 
 volatile int32_t errorNow = 0;
@@ -92,6 +96,17 @@ volatile uint8_t timePrev = 0;
 
 volatile uint8_t my10ms = 0;
 
+// Moved outside to reduce PID() cycles 
+volatile int32_t Product_k;
+volatile int32_t Product_i;
+volatile int32_t Product_d;
+
+volatile int16_t finalDuty1;
+volatile int16_t finalDuty2;
+
+volatile uint8_t regularReading = 1;   // if 0, bot is probably off the line, so just follow through with turn
+
+
 void __interrupt() ISR(void){
     if(INTCON & 0x04){
         TMR0_reset();
@@ -101,11 +116,11 @@ void __interrupt() ISR(void){
     return;
 }
 
+
 void main(void) {
     // Clear everything
     OPTION_REG = 0x00;
     INTCON = 0x00;
-
 
     TRISD = 0x00;    // Set PORTD as output for debugging, remove after
     
@@ -115,12 +130,10 @@ void main(void) {
     Sensor_init();
     PWM_init();
     
-
     timePrev = 0;
     timeNow = my10ms;
 
     PORTD = 0x00;
-
 
     while(1){
         timeNow = my10ms;
@@ -135,54 +148,91 @@ void main(void) {
     return;
 }
 
-// https://eng.libretexts.org/Bookshelves/Industrial_and_Systems_Engineering/Chemical_Process_Dynamics_and_Controls_(Woolf)/09%3A_Proportional-Integral-Derivative_(PID)_Control/9.02%3A_P_I_D_PI_PD_and_PID_control
-// https://apmonitor.com/pdc/index.php/Main/ProportionalIntegralDerivative
+
 void PID(void){ 
-    int32_t Product_k;
-    int32_t Product_i;
-    int32_t Product_d;
+    // https://eng.libretexts.org/Bookshelves/Industrial_and_Systems_Engineering/Chemical_Process_Dynamics_and_Controls_(Woolf)/09%3A_Proportional-Integral-Derivative_(PID)_Control/9.02%3A_P_I_D_PI_PD_and_PID_control
+    // https://apmonitor.com/pdc/index.php/Main/ProportionalIntegralDerivative
+    getError(sensorReading);
 
-    int16_t finalDuty1;
-    int16_t finalDuty2;
+    if(regularReading == 1){        
+        errorSum = errorSum + errorNow;
+        
+        Product_k = k_p * errorNow;
+        Product_i = k_i * errorSum;
+        Product_d = k_d * (float)(errorNow - errorPrev);
 
-    errorNow = errorTable[sensorReading];
-    if(errorNow == 3){      // not handling negative and positive 3 errors causes bot to turn on one side when error = 3, this might fix it tho
+        finalDuty1 = (int16_t) (baseDuty + Product_k + Product_i + Product_d);
+        finalDuty2 = (int16_t) (baseDuty - Product_k - Product_i - Product_d);
+
+        if(finalDuty1 > maxDuty){
+            finalDuty1 = maxDuty;
+        }
+        else if(finalDuty1 < minDuty){
+            finalDuty1 = 0;
+        }
+
+        if(finalDuty2 > maxDuty){
+            finalDuty2 = maxDuty;
+        }
+        else if(finalDuty2 < minDuty){
+            finalDuty2 = 0;
+        }
+
+
+        PWM1_duty((uint16_t) finalDuty1);    // left motor
+        PWM2_duty((uint16_t) finalDuty2);    // right motor
+    }
+
+    else if(regularReading == 0){  
+        PWM1_duty(0);
+        PWM2_duty(0);
+        /*                      Memory Solution, but buggy
         if(errorPrev > 0){
-            errorNow = 3;
+            PWM1_duty(maxDuty);
+            PWM2_duty(0);
         }
         else if(errorPrev < 0){
-            errorNow = -3;
-        }
+            PWM1_duty(0);
+            PWM2_duty(maxDuty);
+        }*/
     }
-    
-    errorSum = errorSum + errorNow;
-    
-    Product_k = k_p * errorNow;
-    Product_i = k_i * errorSum;
-    Product_d = k_d * (float)(errorNow - errorPrev);
-
-    finalDuty1 = (int16_t) (baseDuty + Product_k + Product_i + Product_d);
-    finalDuty2 = (int16_t) (baseDuty - Product_k - Product_i - Product_d);
-
-    if(finalDuty1 > maxDuty){
-        finalDuty1 = maxDuty;
-    }
-    else if(finalDuty1 < minDuty){
-        finalDuty1 = 0;
-    }
-
-    if(finalDuty2 > maxDuty){
-        finalDuty2 = maxDuty;
-    }
-    else if(finalDuty2 < minDuty){
-        finalDuty2 = 0;
-    }
-
-
-    PWM1_duty((uint16_t) finalDuty1);    // left motor
-    PWM2_duty((uint16_t) finalDuty2);    // right motor
-
     errorPrev = errorNow;
+    return;
+}
+
+void getError(uint8_t sensorReading){
+    regularReading = 1;  
+    switch(sensorReading){
+            case WBW:
+                errorNow = 0;
+                break;
+
+            // Turn Right    
+            case WBB:
+                errorNow = 1;
+                break;
+            case WWB:
+                errorNow = 2;
+                break;
+
+            // turn left
+            case BBW:
+                errorNow = -1;
+                break;
+            case BWW:
+                errorNow = -2;
+                break;
+
+            case WWW:
+            case BBB:
+            case BWB:
+                regularReading = 0;  // indicate that the bot is off the line
+                
+                break;
+            
+            default:
+                break;
+    }
     return;
 }
 
