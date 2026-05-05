@@ -67,9 +67,17 @@ STOP at 200, it wobbles so maybe it misses the line, stablizing with k_d might m
 
 void PID(void);
 void getError(uint8_t sensorReading);
+void memorySolution(void);
+
+// Test functions
 void sanityTest(void);
+void errorMonitor(void);
+const uint8_t sevSeg[] = {0b11111100, 0b01100000, 0b11011010, 0b11110010, 0b01100110, 0b10110110, 0b10111110, 0b11100000, 0b11111110, 0b11110110, 0b11101110, 0b00111110, 0b10011100, 0b01111010, 0b10011110, 0b10001110};
+
 
 volatile uint8_t sensorReading = 0;
+
+
 
 enum sensorColor{
     // PID variables
@@ -89,6 +97,7 @@ enum sensorColor{
 
 // Signed component of error
 volatile int8_t errorSign = 0;
+volatile int8_t errorPrevSign = 0;
 volatile uint32_t errorNow = 0;
 volatile uint32_t errorPrev = 0;
 volatile uint32_t errorSum = 0;
@@ -124,6 +133,8 @@ void main(void) {
     OPTION_REG = 0x00;
     INTCON = 0x00;
 
+    TRISA = 0x00;
+    ADCON1 = 0x07;
     TRISD = 0x00;    // Set PORTD as output for debugging, remove after
     
     INTCON |= (1 << 7); //global int enable
@@ -135,6 +146,7 @@ void main(void) {
     timePrev = 0;
     timeNow = my10ms;
 
+    PORTA = 0x00;
     PORTD = 0x00;
 
     while(1){
@@ -143,6 +155,7 @@ void main(void) {
         if((uint8_t)(timeNow - timePrev) >= 1){   // VERY IMPORTANT (uint8_t)
             sensorReading = Sensor_read();
             PID();
+            errorMonitor();
             
             timePrev = timeNow;
         }
@@ -156,55 +169,42 @@ void PID(void){
     // https://apmonitor.com/pdc/index.php/Main/ProportionalIntegralDerivative
     getError(sensorReading);
 
-    if(regularReading == 1){        
-        //errorSum = errorSum + errorNow;
-        
-        Product_k = (int32_t)k_p * (int32_t)errorNow * errorSign;
-        //Product_i = k_i * errorSum;
-        //Product_d = k_d * (float)(errorNow - errorPrev);
+           
+    //errorSum = errorSum + errorNow;
+    
+    Product_k = (int32_t)k_p * (int32_t)errorNow * errorSign;
+    //Product_i = k_i * errorSum;
+    //Product_d = k_d * (float)(errorNow - errorPrev);
 
-        finalDuty1 = (int16_t) (baseDuty + Product_k);// + Product_i + Product_d);
-        finalDuty2 = (int16_t) (baseDuty - Product_k);// - Product_i - Product_d);
+    finalDuty1 = (int16_t) (baseDuty + Product_k);// + Product_i + Product_d);
+    finalDuty2 = (int16_t) (baseDuty - Product_k);// - Product_i - Product_d);
 
-        if(finalDuty1 > maxDuty){
-            finalDuty1 = maxDuty;
-        }
-        else if(finalDuty1 < minDuty){
-            finalDuty1 = 0;
-        }
-
-        if(finalDuty2 > maxDuty){
-            finalDuty2 = maxDuty;
-        }
-        else if(finalDuty2 < minDuty){
-            finalDuty2 = 0;
-        }
-
-
-        PWM1_duty((uint16_t) finalDuty1);    // left motor
-        PWM2_duty((uint16_t) finalDuty2);    // right motor
+    if(finalDuty1 > maxDuty){
+        finalDuty1 = maxDuty;
+    }
+    else if(finalDuty1 < minDuty){
+        finalDuty1 = 0;
     }
 
-    else if(regularReading == 0){  
-        //PWM1_duty(0);
-        //PWM2_duty(0);
-        //                      Memory Solution, but buggy
-        if(errorSign > 0){
-            PWM1_duty(maxDuty);
-            PWM2_duty(0);
-        }
-        else if(errorSign < 0){
-            PWM1_duty(0);
-            PWM2_duty(maxDuty);
-        }
+    if(finalDuty2 > maxDuty){
+        finalDuty2 = maxDuty;
     }
-    errorPrev = errorSign;  //nase error prev on sign now
-    PORTD = errorPrev;
+    else if(finalDuty2 < minDuty){
+        finalDuty2 = 0;
+    }
+
+
+    PWM1_duty((uint16_t) finalDuty1);    // left motor
+    PWM2_duty((uint16_t) finalDuty2);    // right motor
+    
+
+    
+    errorPrev = errorNow;  //base error prev on sign now
+    errorPrevSign = errorSign;
     return;
 }
 
-void getError(uint8_t sensorReading){
-    regularReading = 1;  
+void getError(uint8_t sensorReading){  
     switch(sensorReading){
             case WBW:
                 errorNow = 0;
@@ -231,9 +231,15 @@ void getError(uint8_t sensorReading){
                 errorSign = -1;
                 break;
 
-            case WWW:regularReading = 0; break;  // indicate that the bot is off the line
-            case BBB:regularReading = 0; break;  // indicate that the bot is off the line
-            case BWB:regularReading = 0; break;  // indicate that the bot is off the line
+            case WWW:
+                memorySolution();
+                break;  
+            case BBB:
+                memorySolution();
+                break;
+            case BWB:
+                memorySolution();
+                break;  
             
             default:
                 break;
@@ -241,7 +247,23 @@ void getError(uint8_t sensorReading){
     return;
 }
 
+void memorySolution(void){
+    if(errorPrevSign > 0){
+        errorNow = 4;
+        errorSign = 1;
+    }
+    else if(errorPrevSign < 0){
+        errorNow = 4;
+        errorSign = -1;
+    }
+    else{
+        errorNow = 0;
+    }
+    return;
+}
 
+
+// Test Functions 
 void sanityTest(void){
     
     if      (sensorReading == 0x02){
@@ -260,3 +282,13 @@ void sanityTest(void){
 }
 
 
+void errorMonitor(void){
+    PORTD = sevSeg[errorNow];
+    PORTA = 0x00;
+    if(errorSign < 0){
+        // Set decimal point
+        PORTD |= 0x01;
+    }
+    
+    return;
+}
