@@ -21,7 +21,7 @@
 
 #define _XTAL_FREQ 20000000 
 
-#define k_p 100
+#define k_p 150
 /* k_p history
 #1 100 = undershoot
 #2 200 = seems fine but on 3rd consecutive right angle, it (try changing base duty lower and max to 800 but k_p still 200)
@@ -98,9 +98,9 @@ enum sensorColor{
 // Signed component of error
 volatile int8_t errorSign = 0;
 volatile int8_t errorPrevSign = 0;
-volatile uint32_t errorNow = 0;
-volatile uint32_t errorPrev = 0;
-volatile uint32_t errorSum = 0;
+volatile int32_t errorNow = 0;
+volatile int32_t errorPrev = 0;
+volatile int32_t errorSum = 0;
  
 volatile uint8_t timeNow = 0;
 volatile uint8_t timePrev = 0;
@@ -114,8 +114,6 @@ volatile int32_t Product_d;
 
 volatile int16_t finalDuty1;
 volatile int16_t finalDuty2;
-
-volatile uint8_t regularReading = 1;   // if 0, bot is probably off the line, so just follow through with turn
 
 
 void __interrupt() ISR(void){
@@ -133,9 +131,9 @@ void main(void) {
     OPTION_REG = 0x00;
     INTCON = 0x00;
 
-    TRISA = 0x00;
-    ADCON1 = 0x07;
-    TRISD = 0x00;    // Set PORTD as output for debugging, remove after
+    //TRISA = 0x00;
+    //ADCON1 = 0x07;
+    //TRISD = 0x00;    // Set PORTD as output for debugging, remove after
     
     INTCON |= (1 << 7); //global int enable
 
@@ -146,8 +144,8 @@ void main(void) {
     timePrev = 0;
     timeNow = my10ms;
 
-    PORTA = 0x00;
-    PORTD = 0x00;
+    //PORTA = 0x00;
+    //PORTD = 0x00;
 
     while(1){
         timeNow = my10ms;
@@ -155,7 +153,7 @@ void main(void) {
         if((uint8_t)(timeNow - timePrev) >= 1){   // VERY IMPORTANT (uint8_t)
             sensorReading = Sensor_read();
             PID();
-            errorMonitor();
+            //errorMonitor();
             
             timePrev = timeNow;
         }
@@ -172,24 +170,24 @@ void PID(void){
            
     //errorSum = errorSum + errorNow;
     
-    Product_k = (int32_t)k_p * (int32_t)errorNow * errorSign;
+    Product_k = (int32_t)k_p * (int32_t)errorNow * (int32_t)errorSign;
     //Product_i = k_i * errorSum;
     //Product_d = k_d * (float)(errorNow - errorPrev);
 
-    finalDuty1 = (int16_t) (baseDuty + Product_k);// + Product_i + Product_d);
-    finalDuty2 = (int16_t) (baseDuty - Product_k);// - Product_i - Product_d);
+    finalDuty1 = (int16_t) ((int32_t)baseDuty + (int32_t)Product_k);// + Product_i + Product_d);
+    finalDuty2 = (int16_t) ((int32_t)baseDuty - (int32_t)Product_k);// - Product_i - Product_d);
 
-    if(finalDuty1 > maxDuty){
+    if((int16_t)finalDuty1 > (int16_t)maxDuty){
         finalDuty1 = maxDuty;
     }
-    else if(finalDuty1 < minDuty){
+    else if((int16_t)finalDuty1 < (int16_t)minDuty){
         finalDuty1 = 0;
     }
-
-    if(finalDuty2 > maxDuty){
+    
+    if((int16_t)finalDuty2 > (int16_t)maxDuty){
         finalDuty2 = maxDuty;
     }
-    else if(finalDuty2 < minDuty){
+    else if((int16_t)finalDuty2 < (int16_t)minDuty){
         finalDuty2 = 0;
     }
 
