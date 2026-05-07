@@ -1,10 +1,14 @@
 -- New History After Power Supply Fix --
 
 Attempt |   BaseSpeed   |   P   |   I   |   D   |   Notes
-      1 |      500      |  50   |  0    |   0   |   understeer
-      2 |      500      |  90   |  0    |   0   |
-
-
+      1 |      500      |   50  |   0   |   0   |   understeer
+      2 |      500      |   90  |   0   |   0   |   kinda ok alr, so far doesnt miss any turns | maybe try adding k_d
+      3 |      500      |   90  |   0   |   50  |   now it misses one turn more often
+      4 |      500      |   90  |   0   |  150  |   misses line a little bit less? 
+------------At this point, k_p = 90 and d = 0 works best, the wobble kinda helps it take on the turn. A k_d value makes it more stable and causes it to miss the turn.
+      5 |      700      |  150  |   0   |  150  |   faster and always misses that one right turn due to being out of position
+      6 |      700      |  200  |   0   |  150  |   at times it still misses that one right turn due to being out of position 
+      7 |      700      |  250  |   0   |  150  |   improving... it misses the line even less
 =======================================================
 
 -- History Before the Power Supply Fix -- 

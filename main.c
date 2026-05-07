@@ -21,14 +21,14 @@
 
 #define _XTAL_FREQ 20000000 
 
-#define k_p 90
+#define k_p 250 
 #define k_i 0
-#define k_d 0
+#define k_d 150
 
 
 #define maxDuty 850 // 50% duty, cause motor will be overpowered by 8V batt
 #define minDuty 200 // 100 just buzzes
-#define baseDuty 500    // 
+#define baseDuty 700    // 
 
 
 
