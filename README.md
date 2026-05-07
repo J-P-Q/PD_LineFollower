@@ -15,7 +15,7 @@ A switch case assigns error values corresponding to readings. A memory solution 
 It then uses PID (dt is ignored since the sensor is sampled at a constant rate) to calculate the speed for both motors.
 
 # Demo
-[Watch demo on Youtube] [tba]
+[Watch demo on Youtube] https://youtube.com/shorts/KxIhKxUHnCQ?feature=share
 
 # Build
 Assembled and programmed using MPLABX IDE v6.30
