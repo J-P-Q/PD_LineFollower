@@ -19,3 +19,6 @@ It then uses PID (dt is ignored since the sensor is sampled at a constant rate) 
 
 # Build
 Assembled and programmed using MPLABX IDE v6.30
+
+# Images
+<img width="4096" height="3072" alt="IMG_20260507_203714" src="https://github.com/user-attachments/assets/ec9de223-a95f-4432-8f36-36d4c55a412f" />
