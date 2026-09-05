@@ -11,8 +11,11 @@ A line follower robot with a PD controller. It uses the PIC16F877a coded in bare
 - 9V Battery (for logic, regulated by converter module)
 
 # How it works
-A switch case assigns error values corresponding to readings. A memory solution was developed to save the previous turn direction whenever it loses the line.
-It then uses PD (dt is ignored since the sensor is sampled at a constant rate) to calculate the speed for both motors.
+- A switch-case assigns error values based on sensor readings.
+- A memory solution stores the previous turn direction to recover when the 
+  line is lost.
+- Uses PD control to calculate motor speed for both wheels (dt is ignored 
+  since sensor sampling runs at a constant rate).
 
 # Demo
 [Watch demo on Youtube] https://youtube.com/shorts/KxIhKxUHnCQ?feature=share
