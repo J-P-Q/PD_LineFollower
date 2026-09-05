@@ -1,5 +1,5 @@
 # PD_LineFollowerRobot
-A line follower robot with a PID controller. It uses the PIC16F877a coded in baremetal c, TB6612FNG motor driver, and 3 TCRT5000 IR sensors. 
+A line follower robot with a PD controller. It uses the PIC16F877a coded in baremetal c, TB6612FNG motor driver, and 3 TCRT5000 IR sensors. 
 
 # Hardware
 - PIC16F877a
@@ -12,7 +12,7 @@ A line follower robot with a PID controller. It uses the PIC16F877a coded in bar
 
 # How it works
 A switch case assigns error values corresponding to readings. A memory solution was developed to save the previous turn direction whenever it loses the line.
-It then uses PID (dt is ignored since the sensor is sampled at a constant rate) to calculate the speed for both motors.
+It then uses PD (dt is ignored since the sensor is sampled at a constant rate) to calculate the speed for both motors.
 
 # Demo
 [Watch demo on Youtube] https://youtube.com/shorts/KxIhKxUHnCQ?feature=share
